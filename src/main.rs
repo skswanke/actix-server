@@ -5,6 +5,15 @@ use actix_web::{server, App, HttpRequest, HttpResponse, http::ContentEncoding};
 
 fn index(_req: HttpRequest) -> HttpResponse {
     let filename = "index.html";
+    page_response(filename)
+}
+
+fn hello(_req: HttpRequest) -> HttpResponse {
+    let filename = "hello.html";
+    page_response(filename)
+}
+
+fn page_response(filename: &'static str) -> HttpResponse {
     let mut file = File::open(filename).unwrap();
     let mut contents = String::new();
     file.read_to_string(&mut contents).unwrap();
@@ -17,7 +26,11 @@ fn index(_req: HttpRequest) -> HttpResponse {
 fn main() {
     let addr = "127.0.0.1:8000";
     println!("Server running at: http://{}", addr);
-    server::new(|| App::new().resource("/", |r| r.f(index)))
+    server::new(|| 
+            App::new()
+                .resource("/", |r| r.f(index))
+                .resource("/hello", |r| r.f(hello))
+        )
         .bind(addr)
         .unwrap()
         .run();
