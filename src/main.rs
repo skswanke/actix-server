@@ -1,37 +1,50 @@
 extern crate actix_web;
-use std::fs::File;
-use std::io::prelude::*;
-use actix_web::{server, App, HttpRequest, HttpResponse, http::ContentEncoding};
+extern crate env_logger;
+#[macro_use]
+extern crate tera;
 
-fn index(_req: HttpRequest) -> HttpResponse {
-    let filename = "index.html";
-    page_response(filename)
+use actix_web::{
+    error, http, middleware, server, App, Error, HttpResponse, State
+};
+
+struct AppState {
+    template: tera::Tera
 }
 
-fn hello(_req: HttpRequest) -> HttpResponse {
-    let filename = "hello.html";
-    page_response(filename)
+fn index(state: State<AppState>) -> Result<HttpResponse, Error> {
+    render_template(state, "index.html")
 }
 
-fn page_response(filename: &'static str) -> HttpResponse {
-    let mut file = File::open(filename).unwrap();
-    let mut contents = String::new();
-    file.read_to_string(&mut contents).unwrap();
-    HttpResponse::Ok()
-        .content_encoding(ContentEncoding::Gzip)
-        .content_type("text/html")
-        .body(contents)
+fn detail(state: State<AppState>) -> Result<HttpResponse, Error> {
+    render_template(state, "detail.html")
+}
+
+fn p404(state: State<AppState>) -> Result<HttpResponse, Error> {
+    render_template(state, "404.html")
+}
+
+fn render_template(state: State<AppState>, template: &str) -> Result<HttpResponse, Error> {
+    let s = state
+                .template
+                .render(template, &tera::Context::new())
+                .map_err(|_| error::ErrorInternalServerError("Template error"))?;
+    Ok(HttpResponse::Ok().content_type("text/html").body(s))
 }
 
 fn main() {
-    let addr = "127.0.0.1:8000";
-    println!("Server running at: http://{}", addr);
-    server::new(|| 
-            App::new()
-                .resource("/", |r| r.f(index))
-                .resource("/hello", |r| r.f(hello))
-        )
-        .bind(addr)
-        .unwrap()
+    ::std::env::set_var("RUST_LOG", "actix_web=info");
+    env_logger::init();
+
+    server::new(|| {
+        let tera =
+            compile_templates!(concat!(env!("CARGO_MANIFEST_DIR"), "/templates/**/*"));
+
+        App::with_state(AppState{template: tera})
+            .middleware(middleware::Logger::default())
+            .resource("/", |r| r.method(http::Method::GET).with(index))
+            .resource("/detail", |r| r.method(http::Method::GET).with(detail))
+            .default_resource(|r| r.method(http::Method::GET).with(p404))
+    }).bind("127.0.0.1:8080")
+        .expect("Could not bind to port 8080")
         .run();
 }
