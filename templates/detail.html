@@ -1,14 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>Actix web</title>
-</head>
-<body>
-    {% include "nav.html" %}
+{% extends "base.html" %}
+{% block title %}Detail{% endblock title %}
+{% block content %}
   <h1>Welcome!</h1>
   <p>
-    <h3>More Details</h3>
+    <h3>More Detail</h3>
   </p>
-</body>
-</html>
+{% endblock content %}

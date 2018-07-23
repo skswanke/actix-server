@@ -4,7 +4,7 @@ extern crate env_logger;
 extern crate tera;
 
 use actix_web::{
-    error, http, middleware, server, App, Error, HttpResponse, State
+    error, http, middleware, server, App, Error, HttpResponse, State, fs
 };
 
 struct AppState {
@@ -40,6 +40,8 @@ fn main() {
             compile_templates!(concat!(env!("CARGO_MANIFEST_DIR"), "/templates/**/*"));
 
         App::with_state(AppState{template: tera})
+            .handler( "/static", fs::StaticFiles::new("static")
+                .show_files_listing())
             .middleware(middleware::Logger::default())
             .resource("/", |r| r.method(http::Method::GET).with(index))
             .resource("/detail", |r| r.method(http::Method::GET).with(detail))
