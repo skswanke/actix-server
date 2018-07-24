@@ -40,9 +40,9 @@ fn main() {
             compile_templates!(concat!(env!("CARGO_MANIFEST_DIR"), "/templates/**/*"));
 
         App::with_state(AppState{template: tera})
+            .middleware(middleware::Logger::default())
             .handler( "/static", fs::StaticFiles::new("static")
                 .show_files_listing())
-            .middleware(middleware::Logger::default())
             .resource("/", |r| r.method(http::Method::GET).with(index))
             .resource("/detail", |r| r.method(http::Method::GET).with(detail))
             .default_resource(|r| r.method(http::Method::GET).with(p404))
