@@ -45,7 +45,7 @@ fn main() {
             .resource("/", |r| r.method(http::Method::GET).with(index))
             .resource("/detail", |r| r.method(http::Method::GET).with(detail))
             .default_resource(|r| r.method(http::Method::GET).with(p404))
-    }).bind("127.0.0.1:8080")
+    }).bind("0.0.0.0:8080")
         .expect("Could not bind to port 8080")
         .run();
 }
